@@ -12,7 +12,6 @@ import javax.validation.Validator;
 import java.time.LocalDate;
 import java.util.Set;
 
-
 public class ValidationTest {
 
     private Validator validator;
