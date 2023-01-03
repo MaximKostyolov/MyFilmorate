@@ -10,134 +10,112 @@ import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
 public class UserService {
 
     private final UserStorage userStorage;
-    private Integer userId = 1;
 
     @Autowired
     public UserService(UserStorage userStorage) {
         this.userStorage = userStorage;
     }
 
-    public List<User> findAll() {
-        return userStorage.getAllUsers();
+    public List<User> getAll() {
+        return userStorage.findAll();
     }
 
-    public User createUser(User user) {
-        if (user.getName().isBlank()) {
-            user.setName(user.getLogin());
-        }
-        if (user.getId() == null) {
-            user.setId(getUserId());
-            setUserId(getUserId()+1);
-        }
-        if (user.getFriendsId() == null) {
-            user.setFriendsId(new ArrayList<>());
-        }
-        userStorage.create(user);
-        return user;
+    public User create(User user) {
+        return userStorage.create(user);
     }
 
-    public User updateUser(User user) {
-        boolean isContain = false;
-        if (user.getFriendsId() == null) {
-            user.setFriendsId(new ArrayList<>());
-        }
-        if (!userStorage.getAllUsers().isEmpty()) {
-            User returnUser = userStorage.update(user);
-            if (returnUser != null) {
-                isContain = true;
-            }
+    public User update(User user) {
+        if (!userStorage.findAll().isEmpty()) {
+            user = userStorage.update(user).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    "Некорректный запрос. Пользователь c таким id не найден"));
         } else {
             log.info("Пользователи отсутствуют в базе данных");
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Пользователи отсутствуют в базе данных");
         }
-        if (!isContain) {
-            log.info("Некорректный запрос. Пользователь c таким id не найден");
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Некорректный запрос. Пользователь c таким id не найден");
-        }
+
         return user;
     }
 
-    public List<User> getUsersFriends(Integer id) {
+    public List<User> getFriends(Integer id) {
         List<User> usersFriends = new ArrayList<>();
-        if (id > 0) {
-            if (userStorage.getUser(id) != null) {
-                if (!userStorage.getUser(id).getFriendsId().isEmpty()) {
-                    List<Integer> friendsId = userStorage.getUser(id).getFriendsId();
-                    for (Integer friendId : friendsId) {
-                        usersFriends.add(userStorage.getUser(friendId));
-                    }
-                } else {
-                    log.info("Список друзей пуст");
-                }
-            } else {
-                log.info("Пользователь не найден");
+        User user = userStorage.find(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                "Некорректный запрос. Пользователь c таким id не найден"));
+        if (!user.getFriendsId().isEmpty()) {
+            List<Integer> friendsId = user.getFriendsId();
+            for (Integer friendId : friendsId) {
+                usersFriends.add(getById(friendId));
             }
         } else {
-            log.info("Некорректный запрос. Id должен быть больше 0");
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Некорректный запрос. Id должен быть больше 0");
+            log.info("Список друзей пуст");
         }
+
         return usersFriends;
     }
 
     public void addFriends(Integer id, Integer friendId) {
-        if ((id > 0) && (friendId > 0)) {
-            addFriendToUser(userStorage.getUser(id), friendId);
-            addFriendToUser(userStorage.getUser(friendId), id);
-        } else {
-            log.info("Некорректный запрос. Id должен быть больше 0");
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Некорректный запрос. Id должен быть больше 0");
-        }
+        User user1 = userStorage.find(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                "Некорректный запрос. Пользователь c таким id не найден"));
+        User user2 = userStorage.find(friendId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                "Некорректный запрос. Пользователь c таким id не найден"));
+        addFriendToUser(user1, friendId);
+        addFriendToUser(user2, id);
     }
 
     public void removeFromFriends(Integer id, Integer friendId) {
-        if ((id > 0) && (friendId > 0)) {
-            removeFriend(userStorage.getUser(id), friendId);
-            removeFriend(userStorage.getUser(id), id);
-        } else {
-            log.info("Некорректный запрос. Id должен быть больше 0");
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Некорректный запрос. Id должен быть больше 0");
-        }
+        User user1 = getById(id);
+        User user2 = getById(friendId);
+        removeFriend(user1, friendId);
+        removeFriend(user2, id);
     }
 
-    public User findUserById(Integer id) {
-        if (id > 0) {
-            User user = userStorage.getUser(id);
-            if (user != null) {
-                return user;
+    public User getById(Integer id) {
+        return userStorage.find(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                "Некорректный запрос. Пользователь c таким id не найден"));
+    }
+
+    public List<User> getCommonFriends(Integer id, Integer otherId) {
+        List<User> commonFriends = new ArrayList<>();
+        User user1 = getById(id);
+        User user2 = getById(otherId);
+        if ((user1 != null) || (user2 != null)) {
+            if ((!user1.getFriendsId().isEmpty()) || (!user2.getFriendsId().isEmpty())) {
+                for (Integer friendId : user1.getFriendsId()) {
+                    if (user2.getFriendsId().contains(friendId)) {
+                        commonFriends.add(getById(friendId));
+                    }
+                }
             } else {
-                log.info("Пользователь с таким id не найден");
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Пользователь с таким id не найден");
+                log.info(user1.getName() + " или " + user2.getName() + " не имеют друзей");
             }
         } else {
-            log.info("Некорректный запрос. Id должен быть больше 0");
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Некорректный запрос. Id должен быть больше 0");
+            log.info("Пользователь не существует");
         }
+
+        return commonFriends;
     }
 
     private void addFriendToUser(User user, Integer idFriend) {
-        if (user != null) {
-            List<Integer> friendsIdUser = user.getFriendsId();
-            if (!friendsIdUser.isEmpty()) {
-                if (!friendsIdUser.contains(idFriend)) {
-                    friendsIdUser.add(idFriend);
-                    user.setFriendsId(friendsIdUser);
-                } else {
-                    log.info(user.getName() + " и " + userStorage.getUser(idFriend).getName() + "уже в друзьях");
-                }
-            } else {
+        List<Integer> friendsIdUser = user.getFriendsId();
+        if (!friendsIdUser.isEmpty()) {
+            if (!friendsIdUser.contains(idFriend)) {
                 friendsIdUser.add(idFriend);
                 user.setFriendsId(friendsIdUser);
+            } else {
+                log.info(user.getName() + " и " + getById(idFriend).getName() + "уже в друзьях");
             }
-            userStorage.update(user);
         } else {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Пользователь с таким id не найден");
+            friendsIdUser.add(idFriend);
+            user.setFriendsId(friendsIdUser);
         }
+        userStorage.update(user);
+
     }
 
     private void removeFriend(User user, Integer id) {
@@ -148,39 +126,11 @@ public class UserService {
                 user.setFriendsId(friendsIdUser);
                 userStorage.update(user);
             } else {
-                log.info(user.getName() + " и " + userStorage.getUser(id).getName() + "не были в друзьях");
+                log.info(user.getName() + " и " + getById(id).getName() + "не были в друзьях");
             }
         } else {
             log.info("У пользователя " + user.getName() + "нет друзей");
         }
-    }
-
-    public List<User> getCommonFriends(Integer id, Integer otherId) {
-        List<User> commonFriends = new ArrayList<>();
-        User user1 = userStorage.getUser(id);
-        User user2 = userStorage.getUser(otherId);
-        if ((user1 != null) || (user2 != null)) {
-            if ((!user1.getFriendsId().isEmpty()) || (!user2.getFriendsId().isEmpty())) {
-                for (Integer friendId : user1.getFriendsId()) {
-                    if (user2.getFriendsId().contains(friendId)) {
-                        commonFriends.add(userStorage.getUser(friendId));
-                    }
-                }
-            } else {
-                log.info(user1.getName() + " или " + user2.getName() + " не имеют друзей");
-            }
-        } else {
-            log.info("Пользователь не существует");
-        }
-        return commonFriends;
-    }
-
-    private Integer getUserId() {
-        return userId;
-    }
-
-    private void setUserId(Integer userId) {
-        this.userId = userId;
     }
 
 }

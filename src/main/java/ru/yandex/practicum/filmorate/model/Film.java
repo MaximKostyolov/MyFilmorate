@@ -18,17 +18,22 @@ import java.util.List;
 public class Film {
 
     private Integer id;
+
     @NotNull
     @NotBlank
     private String name;
+
     @NotBlank
     @Size(max=200)
     private String description;
+
     @JsonFormat(pattern = "yyyy-MM-dd")
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate releaseDate;
+
     @Positive
     private Long duration;
+
     @Builder.Default
     private List<Integer> likesUserId = new ArrayList<>();
 

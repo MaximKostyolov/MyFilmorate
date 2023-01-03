@@ -17,15 +17,20 @@ import java.util.List;
 public class User {
 
     private Integer id;
+
     @Email
     private String email;
+
     @NotBlank
     private String login;
+
     private String name;
+
     @JsonFormat(pattern = "yyyy-MM-dd")
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     @Past(message = "Input valid birthdate")
     private LocalDate birthday;
+
     @Builder.Default
     private List<Integer> friendsId = new ArrayList<>();
 
