@@ -2,4 +2,4 @@
 Template repository for Filmorate project.
 
 
-Схема БД.png
+![This is an image](Схема БД.png)
