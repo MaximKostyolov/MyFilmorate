@@ -2,7 +2,7 @@
 Template repository for Filmorate project.
 
 
-![This is an image](https://github.com/MaximKostyolov/filmorate/blob/15d43be1d2eb4f70f582d0432ffbf96e68c942f3/schema.png?raw=true)
+![This is an image](https://github.com/MaximKostyolov/filmorate/blob/68014025e068ebf11b58a09ebe9979a6027a70b3/Schema.jpg?raw=true)
 
 
 
