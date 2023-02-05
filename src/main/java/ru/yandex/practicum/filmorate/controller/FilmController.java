@@ -11,6 +11,7 @@ import ru.yandex.practicum.filmorate.service.FilmService;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
+import java.util.HashMap;
 import java.util.List;
 
 @RestController
@@ -90,6 +91,44 @@ public class FilmController {
         } else {
             log.info("Некорректный запрос. Количество должно быть больше 0");
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Некорректный запрос. Количество должно быть больше 0");
+        }
+    }
+
+    @GetMapping("/genres")
+    public HashMap<Integer, String> getGenres(HttpServletRequest request) {
+        log.info("Получен запрос к эндпоинту: '{} {}', Строка параметров запроса: '{}'",
+                request.getMethod(), request.getRequestURI(), request.getQueryString());
+        return filmService.getAllGenres();
+    }
+
+    @GetMapping("/genres/{id}")
+    public HashMap<Integer, String> getGenre(@PathVariable int id, HttpServletRequest request) {
+        log.info("Получен запрос к эндпоинту: '{} {}', Строка параметров запроса: '{}'",
+                request.getMethod(), request.getRequestURI(), request.getQueryString());
+        if (id > 0) {
+            return filmService.getGenreById(id);
+        } else {
+            log.info("Некорректный запрос. Id должен быть больше 0");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Некорректный запрос. Id должен быть больше 0");
+        }
+    }
+
+    @GetMapping("/mpa")
+    public HashMap<Integer, String> getMPA(HttpServletRequest request) {
+        log.info("Получен запрос к эндпоинту: '{} {}', Строка параметров запроса: '{}'",
+                request.getMethod(), request.getRequestURI(), request.getQueryString());
+        return filmService.getAllMPA();
+    }
+
+    @GetMapping("/mpa/{id}")
+    public HashMap<Integer, String> getMPAById(@PathVariable int id, HttpServletRequest request) {
+        log.info("Получен запрос к эндпоинту: '{} {}', Строка параметров запроса: '{}'",
+                request.getMethod(), request.getRequestURI(), request.getQueryString());
+        if (id > 0) {
+            return filmService.getMPAById(id);
+        } else {
+            log.info("Некорректный запрос. Id должен быть больше 0");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Некорректный запрос. Id должен быть больше 0");
         }
     }
 

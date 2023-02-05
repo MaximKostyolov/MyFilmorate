@@ -5,17 +5,15 @@ import ru.yandex.practicum.filmorate.model.Film;
 
 import java.util.*;
 
-@Component
-public class InMemoryFilmStorage implements FilmStorage {
+@Component("inMemoryStorage")
+public abstract class InMemoryFilmStorage implements FilmStorage {
 
     private Map<Integer, Film> filmStorage = new HashMap<>();
     private Integer filmId = 1;
 
     @Override
     public void removeFilm(Film film) {
-        if (filmStorage.containsKey(film.getId())) {
-            filmStorage.remove(film.getId());
-        }
+        filmStorage.remove(film.getId());
     }
 
     @Override
@@ -41,7 +39,7 @@ public class InMemoryFilmStorage implements FilmStorage {
             filmStorage.put(film.getId(), film);
             return Optional.of(film);
         } else {
-            return null;
+            return Optional.empty();
         }
     }
 
@@ -61,14 +59,14 @@ public class InMemoryFilmStorage implements FilmStorage {
         Comparator<Film> comparator = (film1, film2) -> {
             int size1 = film1.getLikesUserId().size();
             int size2 = film2.getLikesUserId().size();
+            if ((size1 == 0) && (size2 == 0)) {
+                return film1.getId() - film2.getId();
+            }
             if (size1 == 0) {
                 return 1;
             }
             if (size2 == 0) {
                 return -1;
-            }
-            if ((size1 == 0) && (size2 == 0)) {
-                return film1.getId() - film2.getId();
             }
             int compareBySize = size1 - size2;
             if (compareBySize != 0) {
@@ -77,7 +75,7 @@ public class InMemoryFilmStorage implements FilmStorage {
                 return film1.getId() - film2.getId();
             }
         };
-        TreeSet<Film> sortedFilms = new TreeSet<Film>(comparator);
+        TreeSet<Film> sortedFilms = new TreeSet<>(comparator);
         List<Film> films = findAll();
         sortedFilms.addAll(films);
         if (sortedFilms.size() < count) {

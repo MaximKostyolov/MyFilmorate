@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -10,8 +11,8 @@ import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Service
@@ -20,7 +21,7 @@ public class FilmService {
     private final FilmStorage filmStorage;
 
     @Autowired
-    public FilmService(FilmStorage filmStorage) {
+    public FilmService(@Qualifier("filmsDbStorage") FilmStorage filmStorage) {
         this.filmStorage = filmStorage;
     }
 
@@ -41,7 +42,7 @@ public class FilmService {
 
     public Film update(Film film) {
         if (!filmStorage.findAll().isEmpty()) {
-            Film filmUpdate = filmStorage.update(film).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+            film = filmStorage.update(film).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                     "Некорректный запрос. Фильм c таким id не найден"));
         }  else {
             log.info("Фильмы отсутствуют в базе");
@@ -89,6 +90,22 @@ public class FilmService {
 
     public List<Film> getMostLikesFilm(Integer count) {
         return filmStorage.findMostLikesFilm(count);
+    }
+
+    public HashMap<Integer, String> getAllGenres() {
+        return filmStorage.findAllGenres();
+    }
+
+    public HashMap<Integer, String> getGenreById(int id) {
+        return filmStorage.findGenreById(id);
+    }
+
+    public HashMap<Integer, String> getAllMPA() {
+        return filmStorage.findAllMPA();
+    }
+
+    public HashMap<Integer, String> getMPAById(int id) {
+        return filmStorage.findMPAById(id);
     }
 
 }

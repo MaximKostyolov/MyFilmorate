@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Builder;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -14,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Data
+@AllArgsConstructor
 @Builder
 public class Film {
 
@@ -36,5 +38,9 @@ public class Film {
 
     @Builder.Default
     private List<Integer> likesUserId = new ArrayList<>();
+
+    private List<Integer> genreId;
+
+    private Integer ratingMPAId;
 
 }
