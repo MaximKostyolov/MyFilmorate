@@ -7,12 +7,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.RatingMPA;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -58,54 +61,33 @@ public class FilmService {
     }
 
     public void addLike(Integer filmId, Integer userId) {
-        Film film = getById(filmId);
-        List<Integer> likesUserId = new ArrayList<>();
-        if (!film.getLikesUserId().isEmpty()) {
-            likesUserId = film.getLikesUserId();
-        }
-        if (!likesUserId.contains(userId)) {
-            likesUserId.add(userId);
-            film.setLikesUserId(likesUserId);
-            filmStorage.update(film);
-        } else {
-            log.info("Пользователь уже оценил этот фильм");
-        }
+        filmStorage.addLikeToFilm(filmId, userId);
     }
 
     public void removeLike(Integer filmId, Integer userId) {
-        Film film = getById(filmId);
-        if (!film.getLikesUserId().isEmpty()) {
-            List<Integer> likesUserId = film.getLikesUserId();
-            if (likesUserId.contains(userId)) {
-                likesUserId.remove(userId);
-                film.setLikesUserId(likesUserId);
-                filmStorage.update(film);
-            } else {
-                log.info("Пользователь не ставил лайк фильму");
-            }
-        } else {
-            log.info("У фильма нет лайков");
-        }
+        filmStorage.removeLikeToFilm(filmId, userId);
     }
 
     public List<Film> getMostLikesFilm(Integer count) {
         return filmStorage.findMostLikesFilm(count);
     }
 
-    public HashMap<Integer, String> getAllGenres() {
+    public List<Genre> getAllGenres() {
         return filmStorage.findAllGenres();
     }
 
-    public HashMap<Integer, String> getGenreById(int id) {
-        return filmStorage.findGenreById(id);
+    public Genre getGenreById(int id) {
+        return filmStorage.findGenreById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                "Некорректный запрос. Жанр c таким id не найден"));
     }
 
-    public HashMap<Integer, String> getAllMPA() {
+    public List<RatingMPA> getAllMPA() {
         return filmStorage.findAllMPA();
     }
 
-    public HashMap<Integer, String> getMPAById(int id) {
-        return filmStorage.findMPAById(id);
+    public RatingMPA getMPAById(int id) {
+        return filmStorage.findMPAById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                "Некорректный запрос. MPA c таким id не найден"));
     }
 
 }

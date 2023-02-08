@@ -17,8 +17,8 @@ public interface UserStorage {
 
     List<User> findAll();
 
-    void addToFriends(User user, Integer idFriend);
+    void addToFriends(Integer id, Integer friendId);
 
-    void removeFromFriends(User user, Integer id);
+    void removeFromFriends(Integer id, Integer friendId);
 
 }

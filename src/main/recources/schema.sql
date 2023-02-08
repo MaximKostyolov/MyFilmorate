@@ -13,11 +13,11 @@ create table IF NOT EXISTS FILMS
     DESCRIPTION     CHARACTER VARYING(200),
     RELEASE_DATE    DATE,
     DURATION        INTEGER,
-    "RATING_MPA_id" INTEGER,
+    RATING_MPA_id   INTEGER,
     constraint FILMS_PK
         primary key (FILM_ID),
     constraint FILMS_RATING_MPA_RATING_MPA_ID_FK
-        foreign key ("RATING_MPA_id") references RATING_MPA
+        foreign key (RATING_MPA_id) references RATING_MPA
 );
 
 create table IF NOT EXISTS USERS
@@ -33,6 +33,9 @@ create table IF NOT EXISTS USERS
 
 create unique index IF NOT EXISTS USERS_USER_ID
     on USERS (USER_ID);
+
+create unique index IF NOT EXISTS USERS_E_MAIL
+    on USERS (E_MAIL);
 
 create table IF NOT EXISTS FRIENDSHIP
 (

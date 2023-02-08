@@ -6,12 +6,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.RatingMPA;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
-import java.util.HashMap;
 import java.util.List;
 
 @RestController
@@ -95,14 +96,14 @@ public class FilmController {
     }
 
     @GetMapping("/genres")
-    public HashMap<Integer, String> getGenres(HttpServletRequest request) {
+    public List<Genre> getGenres(HttpServletRequest request) {
         log.info("Получен запрос к эндпоинту: '{} {}', Строка параметров запроса: '{}'",
                 request.getMethod(), request.getRequestURI(), request.getQueryString());
         return filmService.getAllGenres();
     }
 
     @GetMapping("/genres/{id}")
-    public HashMap<Integer, String> getGenre(@PathVariable int id, HttpServletRequest request) {
+    public Genre getGenreById(@PathVariable int id, HttpServletRequest request) {
         log.info("Получен запрос к эндпоинту: '{} {}', Строка параметров запроса: '{}'",
                 request.getMethod(), request.getRequestURI(), request.getQueryString());
         if (id > 0) {
@@ -114,14 +115,14 @@ public class FilmController {
     }
 
     @GetMapping("/mpa")
-    public HashMap<Integer, String> getMPA(HttpServletRequest request) {
+    public List<RatingMPA> getMPA(HttpServletRequest request) {
         log.info("Получен запрос к эндпоинту: '{} {}', Строка параметров запроса: '{}'",
                 request.getMethod(), request.getRequestURI(), request.getQueryString());
         return filmService.getAllMPA();
     }
 
     @GetMapping("/mpa/{id}")
-    public HashMap<Integer, String> getMPAById(@PathVariable int id, HttpServletRequest request) {
+    public RatingMPA getMPAById(@PathVariable int id, HttpServletRequest request) {
         log.info("Получен запрос к эндпоинту: '{} {}', Строка параметров запроса: '{}'",
                 request.getMethod(), request.getRequestURI(), request.getQueryString());
         if (id > 0) {

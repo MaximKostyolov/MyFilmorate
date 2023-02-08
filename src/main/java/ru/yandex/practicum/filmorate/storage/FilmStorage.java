@@ -1,8 +1,9 @@
 package ru.yandex.practicum.filmorate.storage;
 
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.RatingMPA;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,12 +21,15 @@ public interface FilmStorage {
 
     List<Film> findMostLikesFilm(Integer count);
 
-    HashMap<Integer, String> findAllGenres();
+    List<Genre> findAllGenres();
 
-    HashMap<Integer, String> findGenreById(int id);
+    Optional<Genre> findGenreById(int id);
 
-    HashMap<Integer, String> findAllMPA();
+    List<RatingMPA> findAllMPA();
 
-    HashMap<Integer, String> findMPAById(int id);
+    Optional<RatingMPA> findMPAById(int id);
 
+    void addLikeToFilm(Integer filmId, Integer userId);
+
+    void removeLikeToFilm(Integer filmId, Integer userId);
 }

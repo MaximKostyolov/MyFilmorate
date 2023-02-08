@@ -1,35 +1,33 @@
 package ru.yandex.practicum.filmorate.storage;
 
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.model.User;
 
-import java.sql.Array;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.*;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @Repository
 @Qualifier("usersDbStorage")
 @Slf4j
-@AllArgsConstructor
 public class UserDbStorage implements UserStorage {
-
-    @Autowired
     private final JdbcTemplate jdbcTemplate;
 
-    /*public UserDbStorage(JdbcTemplate jdbcTemplate){
+    public UserDbStorage(JdbcTemplate jdbcTemplate){
         this.jdbcTemplate = jdbcTemplate;
-    }*/
+    }
 
     @Override
     public void removeUser(User user) {
-        String sqlQuery = "delete from users where id = ?";
+        String sqlQuery = "delete from users where user_id = ?";
         jdbcTemplate.update(sqlQuery, user.getId());
     }
 
@@ -37,58 +35,95 @@ public class UserDbStorage implements UserStorage {
     public User create(User user) {
         user = checkUser(user);
         saveIntoUsers(user);
-        saveIntoFriendship(user);
-
-        return user;
+        User createdUser = returnFromDB(user);
+        return createdUser;
     }
 
     @Override
     public Optional<User> update(User user) {
         user = checkUser(user);
-        return updateUser(user);
+        if (updateUser(user) > 0) {
+            return Optional.of(user);
+        } else {
+            return Optional.empty();
+        }
     }
 
     @Override
     public Optional<User> find(Integer id) {
-        String sqlQuery = "select U.*, group_contact(F.friends_id) " +
+        String sqlQuery = "select U.USER_ID, U.E_MAIL, U.LOGIN, U.NAME, U.BIRTHDAY, group_concat(F.friend_id) as FRIENDS_ID " +
                 "from users as U " +
-                "left join friendship as F ON f.user_id = U.user_id" +
-                "where user_id = ?";
-        return Optional.ofNullable(jdbcTemplate.queryForObject(sqlQuery, this::mapRowToUser, id));
+                "left join friendship as F ON f.USER_ID = U.USER_ID " +
+                "where U.USER_ID = ? " +
+                "group by U.USER_ID";
+        List<User> userToList = jdbcTemplate.query(sqlQuery, this::mapRowToUser, id);
+        if (!userToList.isEmpty()) {
+            return Optional.of(userToList.get(0));
+        } else {
+            return Optional.empty();
+        }
     }
 
     @Override
     public List<User> findAll() {
-        String sqlQuery = "select U.*, group_contact(F.friends_id) " +
+        String sqlQuery = "select U.USER_ID, U.E_MAIL, U.LOGIN, U.NAME, U.BIRTHDAY, group_concat(F.friend_id) as FRIENDS_ID " +
                 "from users as U " +
-                "left join friendship as F ON f.user_id = U.user_id";
+                "left join friendship as F ON f.USER_ID = U.USER_ID " +
+                "group by U.USER_ID";
         return jdbcTemplate.query(sqlQuery, this::mapRowToUser);
     }
 
     @Override
-    public void addToFriends(User user, Integer idFriend) {
+    public void addToFriends(Integer id, Integer idFriend) {
         String sqlQuery = "insert into friendship(user_id, friend_id) values (?, ?)";
-        jdbcTemplate.update(sqlQuery, user.getId(), idFriend);
+        jdbcTemplate.update(sqlQuery, id, idFriend);
     }
 
     @Override
-    public void removeFromFriends(User user, Integer id) {
+    public void removeFromFriends(Integer id, Integer friendsId) {
         String sqlQuery = "delete from friendship where user_id = ? and friend_id = ?";
-        jdbcTemplate.update(sqlQuery, user.getId(), id);
+        jdbcTemplate.update(sqlQuery, id, friendsId);
     }
 
-    private User mapRowToUser(ResultSet resultSet, int rowNum) throws SQLException {
-        List<Integer> friendsId = new ArrayList<>();
-        Array arrayOfFriends = resultSet.getArray("F.friend_id");
-        friendsId = (List<Integer>) arrayOfFriends.getArray();
-        User user = new User(resultSet.getInt("U.user_id"),
-                resultSet.getString("U.e_mail"),
-                resultSet.getString("U.login"),
-                resultSet.getString("U.name"),
-                resultSet.getDate("U.birthday").toLocalDate(),
-                friendsId);
+    private User returnFromDB(User user) {
+        String sqlQuery = "select U.USER_ID, U.E_MAIL, U.LOGIN, U.NAME, U.BIRTHDAY, group_concat(F.friend_id) as FRIENDS_ID " +
+                "from users as U " +
+                "left join friendship as F ON f.USER_ID = U.USER_ID " +
+                "where U.E_MAIL = ? " +
+                "group by U.USER_ID";
+        return jdbcTemplate.queryForObject(sqlQuery, this::mapRowToUser, user.getEmail());
+    }
 
-        return user;
+    private User mapRowToUser(ResultSet resultSet, int rowNum) {
+        try {
+            List<Integer> friendsId = new ArrayList<>();
+            String arrayOfFriends = resultSet.getString("FRIENDS_ID");
+            if (arrayOfFriends != null) {
+                friendsId = stringToArray(arrayOfFriends);
+            }
+            User user = User.builder()
+                    .id(resultSet.getInt("USER_ID"))
+                    .email(resultSet.getString("E_MAIL"))
+                    .login(resultSet.getString("LOGIN"))
+                    .name(resultSet.getString("NAME"))
+                    .birthday(resultSet.getDate("BIRTHDAY").toLocalDate())
+                    .friendsId(friendsId)
+                    .build();
+            return user;
+        } catch (EmptyResultDataAccessException | SQLException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    "Некорректный запрос. Пользователь c таким id не найден");
+        }
+    }
+
+
+    public static List<Integer> stringToArray(String arrayOfFriends) {
+        List<Integer> listIds = new ArrayList<>();
+        String[] arraySplit = arrayOfFriends.split(",");
+        for (int i = 0; i < arraySplit.length; i++) {
+            listIds.add(Integer.parseInt(arraySplit[i]));
+        }
+        return listIds;
     }
 
     private User checkUser(User user) {
@@ -107,24 +142,11 @@ public class UserDbStorage implements UserStorage {
         jdbcTemplate.update(sqlQuery, user.getEmail(), user.getLogin(), user.getName(), user.getBirthday());
     }
 
-    private void saveIntoFriendship(User user) {
-        if (!user.getFriendsId().isEmpty()) {
-            for (Integer friendsId : user.getFriendsId()) {
-                String sqlQuery = "insert into friendship(user_id, friend_id) values (?, ?)";
-                jdbcTemplate.update(sqlQuery, user.getId(), friendsId);
-            }
-        }
-    }
-
-    private Optional<User> updateUser(User user) {
-        String sqlQuery = "update users set e_mail = ?, login = ?, name = ?, birthday = ? where id = ?";
-        int existense = jdbcTemplate.update(sqlQuery, user.getEmail(), user.getLogin(), user.getName(),
+    private int updateUser(User user) {
+        String sqlQuery = "update users set e_mail = ?, login = ?, name = ?, birthday = ? where user_id = ?";
+        int updateCount = jdbcTemplate.update(sqlQuery, user.getEmail(), user.getLogin(), user.getName(),
                 user.getBirthday(), user.getId());
-        if (existense > 0) {
-            return Optional.of(user);
-        } else {
-            return Optional.empty();
-        }
+        return updateCount;
     }
 
 }
