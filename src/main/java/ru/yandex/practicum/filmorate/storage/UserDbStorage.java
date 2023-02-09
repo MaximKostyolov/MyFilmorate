@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.model.User;
@@ -34,9 +35,8 @@ public class UserDbStorage implements UserStorage {
     @Override
     public User create(User user) {
         user = checkUser(user);
-        saveIntoUsers(user);
-        User createdUser = returnFromDB(user);
-        return createdUser;
+        user.setId(saveIntoUsers(user));
+        return user;
     }
 
     @Override
@@ -85,15 +85,6 @@ public class UserDbStorage implements UserStorage {
         jdbcTemplate.update(sqlQuery, id, friendsId);
     }
 
-    private User returnFromDB(User user) {
-        String sqlQuery = "select U.USER_ID, U.E_MAIL, U.LOGIN, U.NAME, U.BIRTHDAY, group_concat(F.friend_id) as FRIENDS_ID " +
-                "from users as U " +
-                "left join friendship as F ON f.USER_ID = U.USER_ID " +
-                "where U.E_MAIL = ? " +
-                "group by U.USER_ID";
-        return jdbcTemplate.queryForObject(sqlQuery, this::mapRowToUser, user.getEmail());
-    }
-
     private User mapRowToUser(ResultSet resultSet, int rowNum) {
         try {
             List<Integer> friendsId = new ArrayList<>();
@@ -137,9 +128,11 @@ public class UserDbStorage implements UserStorage {
         return user;
     }
 
-    private void saveIntoUsers(User user) {
-        String sqlQuery = "insert into users(e_mail, login, name, birthday) values (?, ?, ?, ?)";
-        jdbcTemplate.update(sqlQuery, user.getEmail(), user.getLogin(), user.getName(), user.getBirthday());
+    private int saveIntoUsers(User user) {
+        SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
+                .withTableName("users")
+                .usingGeneratedKeyColumns("user_id");
+        return simpleJdbcInsert.executeAndReturnKey(user.toMap()).intValue();
     }
 
     private int updateUser(User user) {

@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.server.ResponseStatusException;
@@ -37,22 +38,9 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Film create(Film film) {
-        saveIntoFilms(film);
-        film.setId(returnIdFromBd(film));
+        film.setId(saveIntoFilms(film));
         saveIntoGenres(film);
         return film;
-    }
-
-    private Integer returnIdFromBd(Film film) {
-        SqlRowSet idRows = jdbcTemplate.queryForRowSet("select film_id from films where name = ? " +
-                "and description = ?", film.getName(), film.getDescription());
-
-        if (idRows.next()) {
-            Integer id = idRows.getInt("film_id");
-            return id;
-        } else {
-            return null;
-        }
     }
 
     @Override
@@ -241,16 +229,15 @@ public class FilmDbStorage implements FilmStorage {
         }
     }
 
-    private void saveIntoFilms(Film film) {
-        String sqlQuery = "insert into films(name, description, release_date, DURATION, RATING_MPA_id)" +
-                " values (?, ?, ?, ?, ?)";
-        jdbcTemplate.update(sqlQuery, film.getName(), film.getDescription(), film.getReleaseDate(), film.getDuration(),
-                film.getMpa().getId());
+    private int saveIntoFilms(Film film) {
+        SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
+                .withTableName("films")
+                .usingGeneratedKeyColumns("film_id");
+        return simpleJdbcInsert.executeAndReturnKey(film.toMap()).intValue();
     }
 
     private void saveIntoGenres(Film film) {
         if (film.getGenres() != null) {
-            List<Integer> genresId = new ArrayList<>();
             for (Genre genre : film.getGenres()) {
                 String sqlQuery = "insert into genre_films(film_id, genre_id) values (?, ?)";
                 jdbcTemplate.update(sqlQuery, film.getId(), genre.getId());
