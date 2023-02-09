@@ -25,5 +25,6 @@ LIMIT(10)
 SELECT F.friend_id
        U.name
 FROM friendship as F
+LEFT JOIN users AS U ON F.user_id = U.user_id
 WHERE F.user_id = 1 
 
