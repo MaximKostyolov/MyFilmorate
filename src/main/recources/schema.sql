@@ -1,5 +1,3 @@
-DROP ALL OBJECTS DELETE FILES;
-
 create table IF NOT EXISTS RATING_MPA
 (
     RATING_MPA_ID INTEGER auto_increment,
