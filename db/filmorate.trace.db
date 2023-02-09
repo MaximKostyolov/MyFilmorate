@@ -1,0 +1,4 @@
+2023-02-10 00:42:46 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Таблица "USERS" не найдена
+Table "USERS" not found; SQL statement:
+create unique index IF NOT EXISTS USERS_USER_ID on USERS (USER_ID) [42102-214]
