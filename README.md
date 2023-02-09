@@ -1,7 +1,7 @@
 # java-filmorate
 Template repository for Filmorate project.
 
-![](C:\Users\kosty\IdeaProjects\filmorate\Schema.png)
+![](https://github.com/MaximKostyolov/filmorate/blob/0dca048cbcbaa96660ea8c6402d96d2010eafece/Schema.png)
 
 На рисунке приведена схема базы данных Filmorate. Основные модели - фильм и пользователь. 
 
