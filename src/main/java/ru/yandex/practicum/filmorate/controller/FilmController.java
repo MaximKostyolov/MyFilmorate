@@ -6,6 +6,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.RatingMPA;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import javax.servlet.http.HttpServletRequest;
@@ -90,6 +92,44 @@ public class FilmController {
         } else {
             log.info("Некорректный запрос. Количество должно быть больше 0");
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Некорректный запрос. Количество должно быть больше 0");
+        }
+    }
+
+    @GetMapping("/genres")
+    public List<Genre> getGenres(HttpServletRequest request) {
+        log.info("Получен запрос к эндпоинту: '{} {}', Строка параметров запроса: '{}'",
+                request.getMethod(), request.getRequestURI(), request.getQueryString());
+        return filmService.getAllGenres();
+    }
+
+    @GetMapping("/genres/{id}")
+    public Genre getGenreById(@PathVariable int id, HttpServletRequest request) {
+        log.info("Получен запрос к эндпоинту: '{} {}', Строка параметров запроса: '{}'",
+                request.getMethod(), request.getRequestURI(), request.getQueryString());
+        if (id > 0) {
+            return filmService.getGenreById(id);
+        } else {
+            log.info("Некорректный запрос. Id должен быть больше 0");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Некорректный запрос. Id должен быть больше 0");
+        }
+    }
+
+    @GetMapping("/mpa")
+    public List<RatingMPA> getMPA(HttpServletRequest request) {
+        log.info("Получен запрос к эндпоинту: '{} {}', Строка параметров запроса: '{}'",
+                request.getMethod(), request.getRequestURI(), request.getQueryString());
+        return filmService.getAllMPA();
+    }
+
+    @GetMapping("/mpa/{id}")
+    public RatingMPA getMPAById(@PathVariable int id, HttpServletRequest request) {
+        log.info("Получен запрос к эндпоинту: '{} {}', Строка параметров запроса: '{}'",
+                request.getMethod(), request.getRequestURI(), request.getQueryString());
+        if (id > 0) {
+            return filmService.getMPAById(id);
+        } else {
+            log.info("Некорректный запрос. Id должен быть больше 0");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Некорректный запрос. Id должен быть больше 0");
         }
     }
 
