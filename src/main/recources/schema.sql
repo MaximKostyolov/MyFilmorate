@@ -1,85 +1,43 @@
-create table IF NOT EXISTS RATING_MPA
-(
-    RATING_MPA_ID INTEGER auto_increment,
-    NAME          CHARACTER VARYING not null,
-    constraint RATING_MPA_PK
-        primary key (RATING_MPA_ID)
+CREATE TABLE IF NOT EXISTS users (
+         user_id INTEGER AUTO_INCREMENT PRIMARY KEY,
+         email VARCHAR NOT NULL,
+         login VARCHAR NOT NULL,
+         name VARCHAR,
+         birthday DATE
 );
 
-create table IF NOT EXISTS FILMS
-(
-    FILM_ID         INTEGER auto_increment,
-    NAME            CHARACTER VARYING not null,
-    DESCRIPTION     CHARACTER VARYING(200),
-    RELEASE_DATE    DATE,
-    DURATION        INTEGER,
-    RATING_MPA_id   INTEGER,
-    constraint FILMS_PK
-        primary key (FILM_ID),
-    constraint FILMS_RATING_MPA_RATING_MPA_ID_FK
-        foreign key (RATING_MPA_id) references RATING_MPA
+CREATE TABLE IF NOT EXISTS friendship (
+         user_id INTEGER REFERENCES users (user_id),
+         friend_id INTEGER REFERENCES users (user_id),
+         PRIMARY KEY (user_id, friend_id)
 );
 
-create table IF NOT EXISTS USERS
-(
-    USER_ID  INTEGER auto_increment,
-    E_MAIL   CHARACTER VARYING not null,
-    LOGIN    CHARACTER VARYING not null,
-    NAME     CHARACTER VARYING,
-    BIRTHDAY DATE,
-    constraint USERS_PK
-        primary key (USER_ID)
+CREATE TABLE IF NOT EXISTS rating_mpa (
+        rating_mpa_id INTEGER PRIMARY KEY,
+        name VARCHAR
 );
 
-create unique index IF NOT EXISTS USERS_USER_ID
-    on USERS (USER_ID);
-
-create unique index IF NOT EXISTS USERS_E_MAIL
-    on USERS (E_MAIL);
-
-create table IF NOT EXISTS FRIENDSHIP
-(
-    USER_ID   INTEGER,
-    FRIEND_ID INTEGER,
-    constraint FRIENDSHIP_USERS_USER_ID_FK
-        foreign key (USER_ID) references USERS,
-    constraint FRIENDSHIP_USERS_USER_ID_FK_2
-        foreign key (FRIEND_ID) references USERS
+CREATE TABLE IF NOT EXISTS films (
+        film_id INTEGER AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR NOT NULL,
+        description VARCHAR(200) NOT NULL,
+        release_date DATE,
+        duration INTEGER,
+        rating_mpa_id INTEGER REFERENCES rating_mpa (rating_mpa_id)
 );
 
-create unique index IF NOT EXISTS FRIENDSHIP_USER_ID_FRIEND_ID_UINDEX
-    on FRIENDSHIP (USER_ID, FRIEND_ID);
-
-create table IF NOT EXISTS GENRE
-(
-    GENRE_ID INTEGER auto_increment,
-    NAME     CHARACTER VARYING,
-    constraint GENRE_PK
-        primary key (GENRE_ID)
+CREATE TABLE IF NOT EXISTS likes (
+        user_id INTEGER REFERENCES users (user_id),
+        film_id INTEGER REFERENCES films (film_id)
 );
 
-create table IF NOT EXISTS GENRE_FILMS
-(
-    FILM_ID  INTEGER,
-    GENRE_ID INTEGER,
-    constraint GENRE_FILMS_FILMS_FILM_ID_FK
-        foreign key (FILM_ID) references FILMS,
-    constraint GENRE_FILMS_GENRE_GENRE_ID_FK
-        foreign key (GENRE_ID) references GENRE
+CREATE TABLE IF NOT EXISTS genre (
+        genre_id INTEGER PRIMARY KEY,
+        name VARCHAR
 );
 
-create unique index IF NOT EXISTS GENRE_FILMS_FILM_ID_GENRE_ID_UINDEX
-    on GENRE_FILMS (FILM_ID, GENRE_ID);
-
-create table IF NOT EXISTS LIKES
-(
-    FILM_ID INTEGER,
-    USER_ID INTEGER,
-    constraint LIKES_FILMS_FILM_ID_FK
-        foreign key (FILM_ID) references FILMS,
-    constraint LIKES_USERS_USER_ID_FK
-        foreign key (USER_ID) references USERS
+CREATE TABLE IF NOT EXISTS genre_films (
+        film_id INTEGER REFERENCES films (film_id),
+        genre_id INTEGER REFERENCES genre (genre_id),
+        PRIMARY KEY (film_id, genre_id)
 );
-
-create index IF NOT EXISTS LIKES_FILM_ID_USER_ID_INDEX
-    on LIKES (FILM_ID, USER_ID);
