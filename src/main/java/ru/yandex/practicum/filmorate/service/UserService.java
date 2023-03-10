@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -10,16 +11,14 @@ import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Service
 public class UserService {
 
     private final UserStorage userStorage;
-
     @Autowired
-    public UserService(UserStorage userStorage) {
+    public UserService(@Qualifier("usersDbStorage") UserStorage userStorage) {
         this.userStorage = userStorage;
     }
 
@@ -32,14 +31,8 @@ public class UserService {
     }
 
     public User update(User user) {
-        if (!userStorage.findAll().isEmpty()) {
-            user = userStorage.update(user).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                    "Некорректный запрос. Пользователь c таким id не найден"));
-        } else {
-            log.info("Пользователи отсутствуют в базе данных");
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Пользователи отсутствуют в базе данных");
-        }
-
+        user = userStorage.update(user).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                "Некорректный запрос. Пользователь c таким id не найден"));
         return user;
     }
 
@@ -60,19 +53,12 @@ public class UserService {
     }
 
     public void addFriends(Integer id, Integer friendId) {
-        User user1 = userStorage.find(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                "Некорректный запрос. Пользователь c таким id не найден"));
-        User user2 = userStorage.find(friendId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                "Некорректный запрос. Пользователь c таким id не найден"));
-        addFriendToUser(user1, friendId);
-        addFriendToUser(user2, id);
+        userStorage.addToFriends(id, friendId);
+
     }
 
     public void removeFromFriends(Integer id, Integer friendId) {
-        User user1 = getById(id);
-        User user2 = getById(friendId);
-        removeFriend(user1, friendId);
-        removeFriend(user2, id);
+        userStorage.removeFromFriends(id, friendId);
     }
 
     public User getById(Integer id) {
@@ -99,38 +85,6 @@ public class UserService {
         }
 
         return commonFriends;
-    }
-
-    private void addFriendToUser(User user, Integer idFriend) {
-        List<Integer> friendsIdUser = user.getFriendsId();
-        if (!friendsIdUser.isEmpty()) {
-            if (!friendsIdUser.contains(idFriend)) {
-                friendsIdUser.add(idFriend);
-                user.setFriendsId(friendsIdUser);
-            } else {
-                log.info(user.getName() + " и " + getById(idFriend).getName() + "уже в друзьях");
-            }
-        } else {
-            friendsIdUser.add(idFriend);
-            user.setFriendsId(friendsIdUser);
-        }
-        userStorage.update(user);
-
-    }
-
-    private void removeFriend(User user, Integer id) {
-        if (!user.getFriendsId().isEmpty()) {
-            List<Integer> friendsIdUser = user.getFriendsId();
-            if (friendsIdUser.contains(id)) {
-                friendsIdUser.remove(id);
-                user.setFriendsId(friendsIdUser);
-                userStorage.update(user);
-            } else {
-                log.info(user.getName() + " и " + getById(id).getName() + "не были в друзьях");
-            }
-        } else {
-            log.info("У пользователя " + user.getName() + "нет друзей");
-        }
     }
 
 }

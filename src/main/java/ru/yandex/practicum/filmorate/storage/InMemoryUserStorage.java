@@ -5,9 +5,8 @@ import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.*;
 
-
-@Component
-public class InMemoryUserStorage implements UserStorage {
+@Component("inMemoryStorage")
+public abstract class InMemoryUserStorage implements UserStorage {
 
     private Map<Integer, User> userStorage = new HashMap<>();
     private Integer userId = 1;
@@ -69,4 +68,5 @@ public class InMemoryUserStorage implements UserStorage {
     private void setUserId(Integer userId) {
         this.userId = userId;
     }
+
 }
